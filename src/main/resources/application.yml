@@ -3,7 +3,7 @@ spring:
     url: jdbc:mysql://localhost:3306/your_database_name
     username: your_database_username
     password: your_database_password
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10
       minimum-idle: 2
@@ -14,6 +14,9 @@ spring:
     hibernate:
       ddl-auto: none
     show-sql: true
+  threads:
+    virtual:
+      enabled: true
 
 server:
   port: 8080
@@ -22,12 +25,21 @@ logging:
   level:
     root: INFO
     com.yourpackage: DEBUG
+    org.springframework.security: DEBUG
   file:
     path: logs/application.log
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
     file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
 jwt:
-  secret: "its-user-db-config-secret"
-  expiration: 86400
-  refresh-token-expiration: 864000
+  access-token-secret: "Da2E11qTolj3CdZPNc9SbOuFjRKOzqcxQ+fBq396RhoubMByk6GGyG3h3Gd5uHEX3i1JCd5LiB83/5cnLAy6qQ=="
+  refresh-token-secret: "JoaT+zNTbNiqrI0HsBtcktTjp9t2243t+i4osnq80tu7TM5G/E9nJXmSYiao3N1Uu+zwbHkxVcsXsb2CuVLhGA=="
+  expiration: 86400000
+  refresh-token-expiration: 864000000
+
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    path: /api-docs

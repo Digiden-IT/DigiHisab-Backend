@@ -4,6 +4,7 @@ import dev.jahid.user_auth_db_config_boilerplate.auth.request.LoginRequest;
 import dev.jahid.user_auth_db_config_boilerplate.auth.request.RefreshRequest;
 import dev.jahid.user_auth_db_config_boilerplate.auth.service.AuthService;
 import dev.jahid.user_auth_db_config_boilerplate.security.JwtUtil;
+import dev.jahid.user_auth_db_config_boilerplate.security.TokenType;
 import lombok.RequiredArgsConstructor;
 import org.apache.tomcat.websocket.AuthenticationException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +27,7 @@ public class AuthController {
     @PostMapping( "/refresh" )
     public ResponseEntity<?> refresh( @RequestBody RefreshRequest refreshRequest ) throws AuthenticationException {
 
-        if ( !jwtUtil.validateToken( refreshRequest.getToken() ) ) {
+        if ( !jwtUtil.validateToken( refreshRequest.getToken(), TokenType.REFRESH ) ) {
             return ResponseEntity.status( 401 ).body( "Invalid or expired refresh token" );
         }
         return ResponseEntity.ok( authService.refresh( refreshRequest ) );

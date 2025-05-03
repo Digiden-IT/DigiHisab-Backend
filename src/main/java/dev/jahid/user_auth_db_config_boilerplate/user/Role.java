@@ -7,9 +7,9 @@ public enum Role {
     ADMIN( "admin" ),
     USER( "user" );
 
-    final String name;
+    final String value;
 
-    Role( String name ) {
-        this.name = name;
+    Role( String value ) {
+        this.value = value;
     }
 }

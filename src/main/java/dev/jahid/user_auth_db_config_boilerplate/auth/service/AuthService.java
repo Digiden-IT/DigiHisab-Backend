@@ -5,6 +5,7 @@ import dev.jahid.user_auth_db_config_boilerplate.auth.request.RefreshRequest;
 import dev.jahid.user_auth_db_config_boilerplate.auth.response.AuthResponse;
 import dev.jahid.user_auth_db_config_boilerplate.security.CustomUserDetails;
 import dev.jahid.user_auth_db_config_boilerplate.security.JwtUtil;
+import dev.jahid.user_auth_db_config_boilerplate.security.TokenType;
 import dev.jahid.user_auth_db_config_boilerplate.user.model.User;
 import dev.jahid.user_auth_db_config_boilerplate.user.repository.UserRepository;
 import dev.jahid.user_auth_db_config_boilerplate.user.service.LoggedInUserService;
@@ -51,7 +52,7 @@ public class AuthService {
     }
 
     public AuthResponse refresh( RefreshRequest refreshRequest ) throws AuthenticationException {
-        CustomUserDetails userDetails = jwtUtil.extractUser( refreshRequest.getToken() );
+        CustomUserDetails userDetails = jwtUtil.extractUser( refreshRequest.getToken(), TokenType.REFRESH );
 
         if( !passwordEncoder.matches( refreshRequest.getToken(), userDetails.getUser().getRefreshToken() ) ) {
             throw new AuthenticationException( "Invalid token" );

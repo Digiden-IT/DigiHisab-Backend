@@ -9,6 +9,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -21,21 +22,21 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final CustomUserDetailsService customUserDetailsService;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final PublicApiEndpoints publicApiEndpoints;
 
-    private static final String[]  PUBLIC_API_ENDPOINTS = {
-            "/auth/**",
-            "/boilerplate-api-docs/**",
-            "/swagger-ui/**",
-            "/v3/api-docs/**"
-    };
-
-    public SecurityConfig( CustomUserDetailsService customUserDetailsService, JwtAuthenticationFilter jwtAuthenticationFilter ) {
+    public SecurityConfig(
+            CustomUserDetailsService customUserDetailsService,
+            JwtAuthenticationFilter jwtAuthenticationFilter,
+            PublicApiEndpoints publicApiEndpoints
+    ) {
         this.customUserDetailsService = customUserDetailsService;
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.publicApiEndpoints = publicApiEndpoints;
     }
 
     @Bean
@@ -61,8 +62,7 @@ public class SecurityConfig {
                 .httpBasic( AbstractHttpConfigurer::disable )
                 .formLogin( AbstractHttpConfigurer::disable )
                 .authorizeHttpRequests(
-                        auth -> auth.requestMatchers( PUBLIC_API_ENDPOINTS ).permitAll()
-                                .requestMatchers( "/users" ).hasAuthority( Role.ADMIN.getName() )
+                        auth -> auth.requestMatchers( publicApiEndpoints.getEndpoints() ).permitAll()
                                 .anyRequest().authenticated()
                 )
                 .addFilterBefore( jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class )

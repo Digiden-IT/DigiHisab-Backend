@@ -20,8 +20,11 @@ public class JwtUtil {
 
     private final CustomUserDetailsService userDetailsService;
 
-    @Value("${jwt.secret}")
-    private String secretKey;
+    @Value("${jwt.access-token-secret}")
+    private String accessTokenSecret;
+
+    @Value("${jwt.refresh-token-secret}")
+    private String refreshTokenSecret;
 
     @Value("${jwt.expiration}")
     private long jwtExpiration;
@@ -29,38 +32,54 @@ public class JwtUtil {
     @Value("${jwt.refresh-token-expiration}")
     private long refreshExpiration;
 
-    private SecretKey getSignKey() {
-        return Keys.hmacShaKeyFor( Decoders.BASE64.decode( secretKey ) );
+    private SecretKey getSignKeyForAccessToken() {
+        return Keys.hmacShaKeyFor( Decoders.BASE64.decode( accessTokenSecret ) );
     }
 
-    public String generateToken( CustomUserDetails customUserDetails, Long expirationTimeInMilliseconds ) {
+    private SecretKey getSignKeyForRefreshToken() {
+        return Keys.hmacShaKeyFor( Decoders.BASE64.decode( refreshTokenSecret ) );
+    }
+
+    public String generateToken( CustomUserDetails customUserDetails, Long expirationTimeInMilliseconds, TokenType tokenType ) {
 
         Date now = new Date();
         Date expiryDate = new Date( now.getTime() + expirationTimeInMilliseconds );
 
         Map<String, Object> claims = new HashMap<>();
         claims.put( "email", customUserDetails.getUser().getEmail() );
+        claims.put( "tokenType", tokenType );
+
+        if( tokenType.equals( TokenType.ACCESS ) )
+            claims.put( "role", customUserDetails.getUser().getRole().getValue() );
+
+        SecretKey secretKey = getSecretKey( tokenType );
 
         return Jwts.builder()
                 .claims( claims )
                 .issuedAt( now )
                 .expiration( expiryDate )
                 .compressWith( Jwts.ZIP.GZIP )
-                .signWith( getSignKey(), Jwts.SIG.HS512 )
+                .signWith( secretKey, Jwts.SIG.HS512 )
                 .compact();
     }
 
+    private SecretKey getSecretKey( TokenType tokenType ) {
+        return tokenType.equals( TokenType.ACCESS ) ? getSignKeyForAccessToken() : getSignKeyForRefreshToken();
+    }
+
     public String generateAccessToken( CustomUserDetails customUserDetails ) {
-        return generateToken( customUserDetails, jwtExpiration );
+        return generateToken( customUserDetails, jwtExpiration, TokenType.ACCESS );
     }
 
     public String generateRefreshToken( CustomUserDetails customUserDetails ) {
-        return generateToken( customUserDetails, refreshExpiration );
+        return generateToken( customUserDetails, refreshExpiration, TokenType.REFRESH );
     }
 
-    public CustomUserDetails extractUser( String token ) {
+    public CustomUserDetails extractUser( String token, TokenType tokenType ) {
+        SecretKey secretKey = getSecretKey( tokenType );
+
         Claims claims = Jwts.parser()
-                .verifyWith( getSignKey() )
+                .verifyWith( secretKey )
                 .build()
                 .parseSignedClaims( token )
                 .getPayload();
@@ -69,9 +88,25 @@ public class JwtUtil {
         return userDetailsService.loadUserByUsername( email ) ;
     }
 
-    public boolean validateToken( String token ) {
+    public boolean validateToken( String token, TokenType expectedTokenType ) {
         try {
-            Jwts.parser().verifyWith( getSignKey() ).build().parseSignedClaims( token );
+            SecretKey secretKey = getSecretKey( expectedTokenType );
+            Jwts.parser().verifyWith( secretKey ).build().parseSignedClaims( token );
+
+            Claims claims = Jwts.parser()
+                    .verifyWith( secretKey )
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+
+            String tokenTypeStr = (String) claims.get( "tokenType" );
+            TokenType tokenType = TokenType.valueOf( tokenTypeStr );
+
+            if ( !expectedTokenType.equals( tokenType ) ) {
+                System.out.println( "Invalid token type: expected " + expectedTokenType + " but got " + tokenType );
+                return false;
+            }
+
             return true;
         } catch ( ExpiredJwtException e ) {
             System.out.println( "JWT expired at: " + e.getClaims().getExpiration() );
@@ -82,4 +117,3 @@ public class JwtUtil {
         }
     }
 }
-

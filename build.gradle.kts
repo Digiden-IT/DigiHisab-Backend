@@ -29,7 +29,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.5")
-    implementation("com.mysql:mysql-connector-j:9.2.0")
+    implementation("org.postgresql:postgresql:42.7.5")
     implementation("io.jsonwebtoken:jjwt-api:0.12.6")
     implementation("org.bouncycastle:bcprov-jdk18on:1.80")
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
