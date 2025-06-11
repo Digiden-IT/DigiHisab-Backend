@@ -12,14 +12,14 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     private final UserRepository userRepository;
 
-    public CustomUserDetailsService(UserRepository userRepository) {
+    public CustomUserDetailsService( UserRepository userRepository ) {
         this.userRepository = userRepository;
     }
 
     @Override
-    public CustomUserDetails loadUserByUsername( String email ) throws UsernameNotFoundException {
-        User user = userRepository.findByEmail( email )
-                .orElseThrow( () -> new UsernameNotFoundException( "User not found with email: " + email ) );
+    public CustomUserDetails loadUserByUsername( String phoneNumber ) throws UsernameNotFoundException {
+        User user = userRepository.findByPhoneNumber( phoneNumber )
+                .orElseThrow( () -> new UsernameNotFoundException( "User not found with identity : " + phoneNumber ) );
 
         return new CustomUserDetails( user );
     }

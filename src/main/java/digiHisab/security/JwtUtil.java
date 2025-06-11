@@ -32,6 +32,8 @@ public class JwtUtil {
     @Value("${jwt.refresh-token-expiration}")
     private long refreshExpiration;
 
+    private final String PHONE_NUMBER = "phoneNumber";
+
     private SecretKey getSignKeyForAccessToken() {
         return Keys.hmacShaKeyFor( Decoders.BASE64.decode( accessTokenSecret ) );
     }
@@ -46,7 +48,7 @@ public class JwtUtil {
         Date expiryDate = new Date( now.getTime() + expirationTimeInMilliseconds );
 
         Map<String, Object> claims = new HashMap<>();
-        claims.put( "email", customUserDetails.getUser().getEmail() );
+        claims.put( PHONE_NUMBER, customUserDetails.getPhoneNumber() );
         claims.put( "tokenType", tokenType );
 
         if( tokenType.equals( TokenType.ACCESS ) )
@@ -58,7 +60,6 @@ public class JwtUtil {
                 .claims( claims )
                 .issuedAt( now )
                 .expiration( expiryDate )
-                .compressWith( Jwts.ZIP.GZIP )
                 .signWith( secretKey, Jwts.SIG.HS512 )
                 .compact();
     }
@@ -84,19 +85,18 @@ public class JwtUtil {
                 .parseSignedClaims( token )
                 .getPayload();
 
-        String email = (String) claims.get( "email" );
-        return userDetailsService.loadUserByUsername( email ) ;
+        String phoneNumber = (String) claims.get( PHONE_NUMBER );
+        return userDetailsService.loadUserByUsername( phoneNumber ) ;
     }
 
     public boolean validateToken( String token, TokenType expectedTokenType ) {
         try {
             SecretKey secretKey = getSecretKey( expectedTokenType );
-            Jwts.parser().verifyWith( secretKey ).build().parseSignedClaims( token );
 
             Claims claims = Jwts.parser()
                     .verifyWith( secretKey )
                     .build()
-                    .parseSignedClaims(token)
+                    .parseSignedClaims( token )
                     .getPayload();
 
             String tokenTypeStr = (String) claims.get( "tokenType" );
