@@ -2,6 +2,7 @@ package digiHisab.user.model;
 
 import digiHisab.user.Role;
 import digiHisab.user.request.AddUserRequest;
+import digiHisab.utility.audit.AuditableEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -23,7 +24,7 @@ import java.util.Objects;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class User {
+public class User extends AuditableEntity {
 
     @Id
     @GeneratedValue( strategy = GenerationType.IDENTITY )
@@ -41,8 +42,14 @@ public class User {
     @Column( name = "password" )
     private String password;
 
+    @Column( name = "address", length = 2000, columnDefinition = "TEXT" )
+    private String address;
+
+    @Column( name = "salary" )
+    private Long salary;
+
     @Column( name = "is_active", columnDefinition = "boolean default true" )
-    private Boolean isActive;
+    private Boolean isActive = true;
 
     @Enumerated( EnumType.STRING )
     @Column( name = "role" )
@@ -55,9 +62,10 @@ public class User {
         this.name = addUserRequest.getName();
         this.phoneNumber = addUserRequest.getPhoneNumber();
         this.email = addUserRequest.getEmail();
+        this.address = addUserRequest.getAddress();
+        this.salary = addUserRequest.getSalary();
         this.role = addUserRequest.getRole();
     }
-
 
     @Override
     public boolean equals( Object o ) {

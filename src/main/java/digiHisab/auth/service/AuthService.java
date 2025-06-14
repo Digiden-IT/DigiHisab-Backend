@@ -4,6 +4,7 @@ import digiHisab.auth.request.LoginRequest;
 import digiHisab.auth.request.RefreshRequest;
 import digiHisab.auth.response.AuthResponse;
 import digiHisab.security.CustomUserDetails;
+import digiHisab.security.HashUtil;
 import digiHisab.security.JwtUtil;
 import digiHisab.security.TokenType;
 import digiHisab.user.model.User;
@@ -26,8 +27,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuthService {
 
     private final AuthenticationManager authenticationManager;
-    private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final HashUtil hashUtil;
     private final LoggedInUserService loggedInUserService;
     private final UserRepository userRepository;
 
@@ -36,7 +37,7 @@ public class AuthService {
     public ResponseEntity<?> login( LoginRequest loginRequest ) {
 
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken( loginRequest.getEmail(), loginRequest.getPassword() )
+                new UsernamePasswordAuthenticationToken( loginRequest.getPhoneNumber(), loginRequest.getPassword() )
         );
         SecurityContextHolder.getContext().setAuthentication( authentication );
 
@@ -44,9 +45,9 @@ public class AuthService {
 
         String accessToken = jwtUtil.generateAccessToken( userDetails );
         String refreshToken = jwtUtil.generateRefreshToken( userDetails );
-        String encryptedRefreshToken = passwordEncoder.encode( refreshToken );
+        String hashedRefreshToken = hashUtil.hash( refreshToken );
 
-        userRepository.updateRefreshTokenById( userDetails.getUser().getId(), encryptedRefreshToken );
+        userRepository.updateRefreshTokenById( userDetails.getUser().getId(), hashedRefreshToken );
 
         return ResponseEntity.ok( new AuthResponse( accessToken, refreshToken ) );
     }
@@ -54,9 +55,8 @@ public class AuthService {
     public AuthResponse refresh( RefreshRequest refreshRequest ) throws AuthenticationException {
         CustomUserDetails userDetails = jwtUtil.extractUser( refreshRequest.getToken(), TokenType.REFRESH );
 
-        if( !passwordEncoder.matches( refreshRequest.getToken(), userDetails.getUser().getRefreshToken() ) ) {
+        if( !hashUtil.matches( refreshRequest.getToken(), userDetails.getUser().getRefreshToken() ) )
             throw new AuthenticationException( "Invalid token" );
-        }
 
         String accessToken = jwtUtil.generateAccessToken( userDetails );
         return new AuthResponse( accessToken, refreshRequest.getToken() );

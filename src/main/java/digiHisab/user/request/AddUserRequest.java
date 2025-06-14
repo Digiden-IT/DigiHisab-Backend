@@ -9,5 +9,7 @@ public class AddUserRequest {
     private String phoneNumber;
     private String password;
     private String email;
+    private String address;
+    private Long salary;
     private Role role;
 }
